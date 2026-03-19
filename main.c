@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 #include "codec.h"
 
-#define VERSION_INFO "SimpleTextKompressor Release v1.0.0 (February 26, 2026) — 26.4 kB © Gabriel Paes <gabrielpaesdev@proton.me>"
+#define VERSION_INFO "SimpleTextKompressor Release v1.1.0 (March 19, 2026) — 26.5 kB © Gabriel Paes <gabrielpaesdev@proton.me>"
 
 int has_extension(const char *filename, const char *ext) {
     size_t len = strlen(filename);
@@ -28,31 +29,63 @@ char* ensure_stk_extension(const char *filename) {
     }
 }
 
+
+void print_usage() {
+    printf("%s\n\n", VERSION_INFO);
+    printf("Usage:\n");
+    printf("  Compress:   ./stk -c <input.txt> -o <output.stk> [--password <password>]\n");
+    printf("  Decompress: ./stk -d <input.stk> -o <output.txt> [--password <password>]\n");
+    printf("  Version:    ./stk -v\n");
+}
+
 int main(int argc, char *argv[]) {
-    if (argc == 1 || (argc == 2 && strcmp(argv[1], "-v") == 0)) {
-        printf("%s\n", VERSION_INFO);
-        printf("\nUsage:\n");
-        printf("  Compress:   ./cstk 1 input.txt output.stk   [--password <password>]\n");
-        printf("  Decompress: ./cstk 2 input.stk output.txt   [--password <password>]\n");
-        return 0;
-    }
-
-    if (argc < 4) {
-        printf("Invalid usage!\n");
-        printf("Run './cstk -v' to see version and usage info.\n");
-        return 1;
-    }
-
-    int mode = atoi(argv[1]);
-    char *input = argv[2];
-    char *output = argv[3];
+    int mode = 0; // 1 = Compress, 2 = Decompress
+    char *input = NULL;
+    char *output = NULL;
     char *password = NULL;
 
-    for (int i = 4; i < argc; i++) {
-        if (strcmp(argv[i], "--password") == 0 && i + 1 < argc) {
-            password = argv[i + 1];
-            break;
+
+    static struct option long_options[] = {
+        {"password", required_argument, 0, 'p'},
+        {0, 0, 0, 0} 
+    };
+
+    int opt;
+    int option_index = 0;
+
+
+
+    while ((opt = getopt_long(argc, argv, "vc:d:o:p:", long_options, &option_index)) != -1) {
+        switch (opt) {
+            case 'v':
+                print_usage();
+                return 0;
+            case 'c':
+                mode = 1;
+                input = optarg; 
+                break;
+            case 'd':
+                mode = 2;
+                input = optarg;
+                break;
+            case 'o':
+                output = optarg;
+                break;
+            case 'p':
+                password = optarg;
+                break;
+            case '?': 
+            default:
+                print_usage();
+                return 1;
         }
+    }
+
+
+    if (mode == 0 || input == NULL || output == NULL) {
+        fprintf(stderr, "Error: Missing required arguments.\n\n");
+        print_usage();
+        return 1;
     }
 
     char *final_output;
@@ -68,10 +101,6 @@ int main(int argc, char *argv[]) {
     } else if (mode == 2) {
         decompress(input, final_output, password);
         printf("File decompressed successfully to '%s'\n", final_output);
-    } else {
-        printf("Invalid mode. Use 1 for compress and 2 for decompress.\n");
-        free(final_output);
-        return 1;
     }
 
     free(final_output);
