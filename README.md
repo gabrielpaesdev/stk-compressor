@@ -52,5 +52,5 @@ Run the binary with `-v` to see version information, or use the following syntax
 
 ### 📄 License
 
-[cite_start]This project is licensed under the MIT License[cite: 1]. See the `LICENSE` file for details.
+This project is licensed under the MIT License. See the `LICENSE` file for details.
 
